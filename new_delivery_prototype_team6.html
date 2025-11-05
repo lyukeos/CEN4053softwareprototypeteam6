@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DropOff - Delivery Service Prototype</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .phone-container {
+            width: 365px; height: 792px; background: white;
+            border-radius: 47px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; position: relative;
+        }
+        @media (max-width: 450px) {
+            .phone-container { width: 100%; height: 792px; border-radius: 35px; }
+        }
+        .status-bar {
+            height: 54px; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px; background: #f8f9fa; font-size: 15px; font-weight: 500;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 18px; text-align: center;
+        }
+        .app-header h1 { font-size: 26px; margin-bottom: 5px; }
+        .app-header p { font-size: 14px; opacity: 0.9; }
+        .content { padding: 18px; height: calc(792px - 54px - 95px); overflow-y: auto; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 10px;
+            font-size: 15px; transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none; border-color: #667eea;
+        }
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-top: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: white; color: #667eea; border: 2px solid #667eea; }
+        .btn-secondary:hover { background: #f8f9fa; }
+        .text-link { text-align: center; margin-top: 18px; color: #667eea; cursor: pointer; font-size: 16px; }
+        .text-link:hover { text-decoration: underline; }
+        .error-message { background: #fee; color: #c33; padding: 12px; border-radius: 10px; margin-bottom: 18px; font-size: 15px; }
+        .success-message { background: #efe; color: #3c3; padding: 12px; border-radius: 10px; margin-bottom: 18px; font-size: 15px; }
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 10px; }
+        .step {
+            width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: #e0e0e0; color: #999; font-weight: 600; font-size: 16px; position: relative;
+        }
+        .step.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .step.completed { background: #4caf50; color: white; }
+        .step:not(:last-child)::after {
+            content: ''; position: absolute; width: 70px; height: 2px; background: #e0e0e0;
+            left: 100%; top: 50%; transform: translateY(-50%);
+        }
+        .service-card {
+            border: 2px solid #e0e0e0; border-radius: 12px; padding: 14px; margin-bottom: 12px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        .service-card:hover { border-color: #667eea; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2); }
+        .service-card.selected { border-color: #667eea; background: #f0f4ff; }
+        .service-card h3 { margin-bottom: 6px; color: #333; font-size: 17px; }
+        .service-card .service-speed { color: #666; font-size: 13px; margin-bottom: 6px; }
+        .service-card .service-price { color: #667eea; font-size: 20px; font-weight: 700; }
+        .size-result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;
+        }
+        .size-result h3 { font-size: 16px; margin-bottom: 12px; }
+        .size-result .size-label { font-size: 38px; font-weight: 700; margin-bottom: 12px; }
+        .size-result .size-price { font-size: 26px; font-weight: 600; }
+        .size-result .dimensions-display { font-size: 14px; opacity: 0.9; margin-top: 8px; }
+        .checkbox-group {
+            display: flex; align-items: center; margin-top: 14px; padding: 12px;
+            background: #f8f9fa; border-radius: 10px;
+        }
+        .checkbox-group input { width: 20px; height: 20px; margin-right: 10px; }
+        .checkbox-group label { margin: 0; color: #333; font-size: 14px; }
+        .help-fee-notice {
+            background: #fff9e6; border: 2px solid #ffd700; padding: 10px; border-radius: 8px;
+            margin-top: 8px; text-align: center; font-size: 14px; color: #333; font-weight: 600;
+        }
+        .summary-section {
+            background: #f8f9fa; border-radius: 10px; padding: 12px; margin-bottom: 12px;
+        }
+        .summary-section h3 {
+            margin-bottom: 8px; color: #333; font-size: 15px;
+            border-bottom: 2px solid #e0e0e0; padding-bottom: 6px;
+        }
+        .summary-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+        .summary-item strong { color: #333; }
+        .summary-item span { color: #666; }
+        .total-price {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            padding: 14px; border-radius: 10px; display: flex; justify-content: space-between;
+            align-items: center; margin-top: 14px; font-size: 17px; font-weight: 700;
+        }
+        .edit-btn {
+            background: white; color: #667eea; border: none; padding: 6px 12px;
+            border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; margin-top: 6px;
+        }
+        .edit-btn:hover { background: #f0f4ff; }
+        .tracking-id {
+            background: #fff9e6; border: 2px solid #ffd700; border-radius: 10px;
+            padding: 14px; text-align: center; margin: 16px 0;
+        }
+        .tracking-id h3 { color: #333; margin-bottom: 8px; font-size: 15px; }
+        .tracking-id .id { font-size: 22px; font-weight: 700; color: #667eea; font-family: monospace; }
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 16px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .address-type-selector { display: flex; gap: 10px; margin-bottom: 14px; }
+        .address-type-btn {
+            flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;
+            background: white; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.3s;
+        }
+        .address-type-btn.active { border-color: #667eea; background: #f0f4ff; color: #667eea; }
+        .address-type-btn:disabled { background: #f0f0f0; color: #999; cursor: not-allowed; border-color: #ddd; }
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            padding: 18px; border-radius: 12px; margin-bottom: 18px;
+        }
+        .welcome-card h3 { margin-bottom: 6px; font-size: 18px; }
+        .welcome-card p { font-size: 14px; }
+        .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+        .action-card {
+            background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 18px;
+            text-align: center; cursor: pointer; transition: all 0.3s;
+        }
+        .action-card:hover {
+            border-color: #667eea; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        .action-card .icon { font-size: 36px; margin-bottom: 8px; }
+        .action-card h4 { color: #333; font-size: 14px; }
+        .saved-card {
+            border: 2px solid #e0e0e0; border-radius: 10px; padding: 14px; margin-bottom: 12px;
+            cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 12px;
+        }
+        .saved-card:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2); }
+        .saved-card.selected { border-color: #667eea; background: #f0f4ff; }
+        .saved-card input[type="radio"] { width: 18px; height: 18px; }
+        .saved-card-info { flex: 1; }
+        .saved-card-type { font-weight: 600; font-size: 15px; color: #333; margin-bottom: 4px; }
+        .saved-card-number { font-size: 14px; color: #666; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        function DropOffApp() {
+            const [currentScreen, setCurrentScreen] = useState('dashboard');
+            const [userData, setUserData] = useState({ name: 'John Doe', email: 'john@example.com', phone: '(555) 123-4567', password: 'password123', homeAddress: '123 A St.', paymentMethod: 'credit' });
+            const [orderData, setOrderData] = useState({
+                pickupAddressType: 'home', pickupAddress: '', dropoffAddressType: 'custom', dropoffAddress: '',
+                itemLength: '', itemWidth: '', itemHeight: '', itemSize: '', itemBaseCost: 0,
+                additionalHelp: false, serviceLevel: '', serviceLevelPrice: 0,
+                paymentMethodType: 'existing', cardNumber: '', cardExpiry: '', cardCVV: '', cardName: '', tipAmount: 0
+            });
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [trackingId, setTrackingId] = useState('');
+            const [mfaCode, setMfaCode] = useState('');
+            const [showMFA, setShowMFA] = useState(false);
+
+            const serviceLevels = [
+                { id: 'standard', name: 'Standard', price: 20.00, speed: 'Delivery within 2-3 hours' },
+                { id: 'expedited', name: 'Standard Expedite', price: 35.00, speed: 'Delivery within 1-2 hours' },
+                { id: 'express', name: 'Expedite Delivery', price: 55.00, speed: 'Delivery within 30-60 minutes' }
+            ];
+
+            const calculateSize = (length, width, height) => {
+                const l = parseFloat(length) || 0, w = parseFloat(width) || 0, h = parseFloat(height) || 0;
+                const volume = l * w * h;
+                if (volume === 0) return { size: '', cost: 0 };
+                if (volume <= 5000) return { size: 'Small', cost: 15 };
+                if (volume <= 20000) return { size: 'Medium', cost: 30 };
+                return { size: 'Large', cost: 50 };
+            };
+
+            const handleSignup = () => {
+                setError('');
+                if (!userData.name || !userData.email || !userData.phone || !userData.password) { setError('All fields are required'); return; }
+                if (!userData.email.includes('@')) { setError('Please enter a valid email address'); return; }
+                if (userData.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+                setSuccess('Account created! Verification email sent to ' + userData.email);
+                setTimeout(() => { setSuccess(''); setCurrentScreen('login'); }, 2000);
+            };
+
+            const handleLogin = () => {
+                setError('');
+                if (!userData.email || !userData.password) { setError('Email and password are required'); return; }
+                setShowMFA(true);
+            };
+
+            const handleMFA = () => {
+                if (!mfaCode || mfaCode.length !== 6) { setError('Please enter a valid 6-digit code'); return; }
+                setSuccess('Login successful!');
+                setTimeout(() => { setSuccess(''); setShowMFA(false); setCurrentScreen('accountSetup'); }, 1500);
+            };
+
+            const handleAccountSetup = () => {
+                setError('');
+                if (!userData.homeAddress || !userData.paymentMethod) { setError('Please complete all required fields'); return; }
+                setSuccess('Account setup complete!');
+                setTimeout(() => { setSuccess(''); setCurrentScreen('dashboard'); }, 1500);
+            };
+
+            const startNewOrder = () => {
+                setOrderData({
+                    pickupAddressType: 'home', pickupAddress: '', dropoffAddressType: 'custom', dropoffAddress: '',
+                    itemLength: '', itemWidth: '', itemHeight: '', itemSize: '', itemBaseCost: 0,
+                    additionalHelp: false, serviceLevel: '', serviceLevelPrice: 0,
+                    paymentMethodType: 'existing', cardNumber: '', cardExpiry: '', cardCVV: '', cardName: '', tipAmount: 0
+                });
+                setCurrentScreen('assignAddress');
+            };
+
+            const handleAddressSubmit = () => {
+                setError('');
+                const pickupAddr = orderData.pickupAddressType === 'home' ? userData.homeAddress : orderData.pickupAddress;
+                const dropoffAddr = orderData.dropoffAddressType === 'home' ? userData.homeAddress : orderData.dropoffAddress;
+                if (!pickupAddr || !dropoffAddr) { setError('Please provide both pickup and drop-off addresses'); return; }
+                if (orderData.pickupAddressType === 'custom' && !orderData.pickupAddress) { setError('Please enter pickup address'); return; }
+                if (orderData.dropoffAddressType === 'custom' && !orderData.dropoffAddress) { setError('Please enter drop-off address'); return; }
+                if (orderData.pickupAddressType === 'home' && orderData.dropoffAddressType === 'home') { setError('Pickup and drop-off cannot both be home address'); return; }
+                const normalizeAddress = (addr) => addr.replace(/[\s\.,-]/g, '').toLowerCase();
+                if (normalizeAddress(pickupAddr) === normalizeAddress(dropoffAddr)) { setError('Pickup and drop-off addresses cannot be the same'); return; }
+                setCurrentScreen('selectDimensions');
+            };
+
+            const handleDimensionsSubmit = () => {
+                setError('');
+                if (!orderData.itemLength || !orderData.itemWidth || !orderData.itemHeight) { setError('Please enter all dimensions (length, width, height)'); return; }
+                const { size, cost } = calculateSize(orderData.itemLength, orderData.itemWidth, orderData.itemHeight);
+                if (!size) { setError('Please enter valid dimensions greater than 0'); return; }
+                setOrderData({ ...orderData, itemSize: size, itemBaseCost: cost });
+                setCurrentScreen('confirmDimensions');
+            };
+
+            const handleCardSubmit = () => {
+                setError('');
+                if (orderData.paymentMethodType === 'new') {
+                    if (!orderData.cardNumber || !orderData.cardExpiry || !orderData.cardCVV || !orderData.cardName) {
+                        setError('Please complete all card information');
+                        return;
+                    }
+                    if (orderData.cardNumber.replace(/\s/g, '').length !== 16) {
+                        setError('Please enter a valid 16-digit card number');
+                        return;
+                    }
+                }
+                setCurrentScreen('addTip');
+            };
+
+            const handleTipSubmit = () => {
+                setCurrentScreen('confirmOrder');
+            };
+
+            const handleServiceSelection = (service) => {
+                setOrderData({ ...orderData, serviceLevel: service.name, serviceLevelPrice: service.price });
+            };
+
+            const proceedToConfirm = () => {
+                setError('');
+                if (!orderData.serviceLevel) { setError('Please select a service level'); return; }
+                setCurrentScreen('paymentCard');
+            };
+
+            const handleSubmitOrder = () => {
+                setIsLoading(true); setError('');
+                setTimeout(() => {
+                    const newTrackingId = 'DO-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+                    setTrackingId(newTrackingId); setIsLoading(false); setCurrentScreen('orderConfirmed');
+                }, 2000);
+            };
+
+            const getPickupAddress = () => orderData.pickupAddressType === 'home' ? userData.homeAddress : orderData.pickupAddress;
+            const getDropoffAddress = () => orderData.dropoffAddressType === 'home' ? userData.homeAddress : orderData.dropoffAddress;
+            const getTotalCost = () => {
+                const helpCost = orderData.additionalHelp ? 25 : 0;
+                const tip = orderData.tipAmount || 0;
+                return orderData.itemBaseCost + orderData.serviceLevelPrice + helpCost + tip;
+            };
+
+            const handleAddressTypeChange = (type, value) => {
+                if (type === 'pickup') setOrderData({ ...orderData, pickupAddressType: value });
+                else setOrderData({ ...orderData, dropoffAddressType: value });
+            };
+
+            return (
+                <div className="phone-container">
+                    <div className="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+
+                    {currentScreen === 'welcome' && (<>
+                        <div className="app-header"><h1>🚚 DropOff</h1><p>On-demand delivery for furniture & large items</p></div>
+                        <div className="content">
+                            <div style={{textAlign: 'center', margin: '50px 0'}}>
+                                <div style={{fontSize: '100px', marginBottom: '25px'}}>📦</div>
+                                <h2 style={{marginBottom: '18px', color: '#333', fontSize: '28px'}}>Welcome to DropOff</h2>
+                                <p style={{color: '#666', marginBottom: '35px', fontSize: '17px'}}>Quick, reliable delivery for your furniture and large items</p>
+                            </div>
+                            <button className="btn btn-primary" onClick={() => setCurrentScreen('signup')}>Create Account</button>
+                            <button className="btn btn-secondary" onClick={() => setCurrentScreen('login')}>Login</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'signup' && (<>
+                        <div className="app-header"><h1>Create Account</h1><p>Join DropOff to start delivering</p></div>
+                        <div className="content">
+                            {error && <div className="error-message">{error}</div>}
+                            {success && <div className="success-message">{success}</div>}
+                            <div className="form-group"><label>Full Name *</label><input type="text" placeholder="John Doe" value={userData.name} onChange={(e) => setUserData({...userData, name: e.target.value})} /></div>
+                            <div className="form-group"><label>Email Address *</label><input type="email" placeholder="john@example.com" value={userData.email} onChange={(e) => setUserData({...userData, email: e.target.value})} /></div>
+                            <div className="form-group"><label>Phone Number *</label><input type="tel" placeholder="(555) 123-4567" value={userData.phone} onChange={(e) => setUserData({...userData, phone: e.target.value})} /></div>
+                            <div className="form-group"><label>Password *</label><input type="password" placeholder="Minimum 6 characters" value={userData.password} onChange={(e) => setUserData({...userData, password: e.target.value})} /></div>
+                            <button className="btn btn-primary" onClick={handleSignup}>Create Account</button>
+                            <div className="text-link" onClick={() => setCurrentScreen('login')}>Already have an account? Login</div>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'login' && !showMFA && (<>
+                        <div className="app-header"><h1>Welcome Back</h1><p>Login to your account</p></div>
+                        <div className="content">
+                            {error && <div className="error-message">{error}</div>}
+                            {success && <div className="success-message">{success}</div>}
+                            <div className="form-group"><label>Email Address</label><input type="email" placeholder="john@example.com" value={userData.email} onChange={(e) => setUserData({...userData, email: e.target.value})} /></div>
+                            <div className="form-group"><label>Password</label><input type="password" placeholder="Enter your password" value={userData.password} onChange={(e) => setUserData({...userData, password: e.target.value})} /></div>
+                            <button className="btn btn-primary" onClick={handleLogin}>Login</button>
+                            <div className="text-link" onClick={() => setCurrentScreen('signup')}>Don't have an account? Sign up</div>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'login' && showMFA && (<>
+                        <div className="app-header"><h1>Two-Factor Authentication</h1><p>Enter the code sent to your device</p></div>
+                        <div className="content">
+                            {error && <div className="error-message">{error}</div>}
+                            {success && <div className="success-message">{success}</div>}
+                            <div style={{textAlign: 'center', margin: '35px 0'}}>
+                                <div style={{fontSize: '70px', marginBottom: '22px'}}>🔐</div>
+                                <p style={{color: '#666', marginBottom: '22px', fontSize: '16px'}}>We've sent a 6-digit code to<br/><strong>{userData.email}</strong></p>
+                            </div>
+                            <div className="form-group"><label>Verification Code</label><input type="text" placeholder="Enter 6-digit code" maxLength="6" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} style={{textAlign: 'center', fontSize: '28px', letterSpacing: '10px'}} /></div>
+                            <button className="btn btn-primary" onClick={handleMFA}>Verify & Login</button>
+                            <div className="text-link" onClick={() => setShowMFA(false)}>Back to login</div>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'accountSetup' && (<>
+                        <div className="app-header"><h1>Account Setup</h1><p>Complete your profile</p></div>
+                        <div className="content">
+                            {error && <div className="error-message">{error}</div>}
+                            {success && <div className="success-message">{success}</div>}
+                            <div className="form-group"><label>Home Address *</label><input type="text" placeholder="123 Main St, City, State 12345" value={userData.homeAddress} onChange={(e) => setUserData({...userData, homeAddress: e.target.value})} /><small style={{color: '#666', fontSize: '13px', marginTop: '6px', display: 'block'}}>This will be used as your default pickup/delivery address</small></div>
+                            <div className="form-group"><label>Payment Method *</label><select value={userData.paymentMethod} onChange={(e) => setUserData({...userData, paymentMethod: e.target.value})}><option value="">Select payment method</option><option value="credit">Credit Card</option><option value="debit">Debit Card</option><option value="paypal">PayPal</option><option value="applepay">Apple Pay</option></select></div>
+                            <button className="btn btn-primary" onClick={handleAccountSetup}>Complete Setup</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'dashboard' && (<>
+                        <div className="app-header"><h1>Dashboard</h1><p>Welcome back, {userData.name}!</p></div>
+                        <div className="content">
+                            <div className="welcome-card"><h3>👋 Hello, {userData.name}!</h3><p>Ready to deliver something today?</p></div>
+                            <div className="quick-actions">
+                                <div className="action-card" onClick={startNewOrder}><div className="icon">📦</div><h4>New Delivery</h4></div>
+                                <div className="action-card"><div className="icon">📍</div><h4>Track Order</h4></div>
+                                <div className="action-card"><div className="icon">📜</div><h4>Order History</h4></div>
+                                <div className="action-card"><div className="icon">👤</div><h4>Account</h4></div>
+                            </div>
+                            <div style={{marginTop: '20px', padding: '14px', background: '#f8f9fa', borderRadius: '10px'}}><h4 style={{marginBottom: '8px', color: '#333', fontSize: '15px'}}>Recent Activity</h4><p style={{color: '#666', fontSize: '13px'}}>No recent deliveries</p></div>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'assignAddress' && (<>
+                        <div className="app-header"><h1>Delivery Locations</h1><p>Step 1 of 4</p></div>
+                        <div className="content">
+                            <div className="step-indicator"><div className="step active">1</div><div className="step">2</div><div className="step">3</div><div className="step">4</div></div>
+                            {error && <div className="error-message">{error}</div>}
+                            <h3 style={{marginBottom: '14px', color: '#333', fontSize: '16px'}}>📍 Pickup Location</h3>
+                            <div className="address-type-selector">
+                                <button className={`address-type-btn ${orderData.pickupAddressType === 'home' ? 'active' : ''}`} onClick={() => handleAddressTypeChange('pickup', 'home')} disabled={orderData.dropoffAddressType === 'home'}>🏠 Home Address</button>
+                                <button className={`address-type-btn ${orderData.pickupAddressType === 'custom' ? 'active' : ''}`} onClick={() => handleAddressTypeChange('pickup', 'custom')}>📍 Custom Address</button>
+                            </div>
+                            {orderData.pickupAddressType === 'home' ? (<div style={{padding: '12px', background: '#f8f9fa', borderRadius: '10px', marginBottom: '14px'}}><p style={{color: '#666', fontSize: '13px', margin: 0}}>{userData.homeAddress}</p></div>) : (<div className="form-group"><input type="text" placeholder="Enter pickup address" value={orderData.pickupAddress} onChange={(e) => setOrderData({...orderData, pickupAddress: e.target.value})} /></div>)}
+                            <h3 style={{marginBottom: '14px', color: '#333', marginTop: '18px', fontSize: '16px'}}>🎯 Drop-off Location</h3>
+                            <div className="address-type-selector">
+                                <button className={`address-type-btn ${orderData.dropoffAddressType === 'home' ? 'active' : ''}`} onClick={() => handleAddressTypeChange('dropoff', 'home')} disabled={orderData.pickupAddressType === 'home'}>🏠 Home Address</button>
+                                <button className={`address-type-btn ${orderData.dropoffAddressType === 'custom' ? 'active' : ''}`} onClick={() => handleAddressTypeChange('dropoff', 'custom')}>📍 Custom Address</button>
+                            </div>
+                            {orderData.dropoffAddressType === 'home' ? (<div style={{padding: '12px', background: '#f8f9fa', borderRadius: '10px', marginBottom: '14px'}}><p style={{color: '#666', fontSize: '13px', margin: 0}}>{userData.homeAddress}</p></div>) : (<div className="form-group"><input type="text" placeholder="Enter drop-off address" value={orderData.dropoffAddress} onChange={(e) => setOrderData({...orderData, dropoffAddress: e.target.value})} /></div>)}
+                            <button className="btn btn-primary" onClick={handleAddressSubmit}>Continue to Item Dimensions</button>
+                            <button className="btn btn-secondary" onClick={() => setCurrentScreen('dashboard')}>Cancel</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'selectDimensions' && (<>
+                        <div className="app-header"><h1>Item Dimensions</h1><p>Step 2 of 4</p></div>
+                        <div className="content">
+                            <div className="step-indicator"><div className="step completed">1</div><div className="step active">2</div><div className="step">3</div><div className="step">4</div></div>
+                            {error && <div className="error-message">{error}</div>}
+                            <h3 style={{marginBottom: '16px', color: '#333', fontSize: '16px'}}>📏 Enter Item Dimensions (inches)</h3>
+                            <div className="form-group"><label>Length (inches)</label><input type="number" placeholder="Enter length" value={orderData.itemLength} onChange={(e) => setOrderData({...orderData, itemLength: e.target.value})} min="0" /></div>
+                            <div className="form-group"><label>Width (inches)</label><input type="number" placeholder="Enter width" value={orderData.itemWidth} onChange={(e) => setOrderData({...orderData, itemWidth: e.target.value})} min="0" /></div>
+                            <div className="form-group"><label>Height (inches)</label><input type="number" placeholder="Enter height" value={orderData.itemHeight} onChange={(e) => setOrderData({...orderData, itemHeight: e.target.value})} min="0" /></div>
+                            <div className="checkbox-group"><input type="checkbox" checked={orderData.additionalHelp} onChange={(e) => setOrderData({...orderData, additionalHelp: e.target.checked})} /><label>I need help loading/unloading</label></div>
+                            {orderData.additionalHelp && <div className="help-fee-notice">💰 Additional Help Fee: +$25.00</div>}
+                            <button className="btn btn-primary" onClick={handleDimensionsSubmit}>Calculate Price</button>
+                            <button className="btn btn-secondary" onClick={() => setCurrentScreen('assignAddress')}>Back</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'confirmDimensions' && (<>
+                        <div className="app-header"><h1>Calculated Price</h1><p>Step 2 of 4</p></div>
+                        <div className="content">
+                            <div className="step-indicator"><div className="step completed">1</div><div className="step active">2</div><div className="step">3</div><div className="step">4</div></div>
+                            <div className="size-result"><h3>Item Size & Cost</h3><div className="size-label">{orderData.itemSize}</div><div className="size-price">${orderData.itemBaseCost.toFixed(2)}</div><div className="dimensions-display">{orderData.itemLength}" × {orderData.itemWidth}" × {orderData.itemHeight}"</div></div>
+                            {orderData.additionalHelp && <div style={{background: '#fff9e6', padding: '14px', borderRadius: '10px', marginBottom: '14px', textAlign: 'center'}}><p style={{color: '#333', fontWeight: '600', marginBottom: '4px', fontSize: '14px'}}>Additional Help Selected</p><p style={{color: '#667eea', fontSize: '18px', fontWeight: '700'}}>+$25.00</p></div>}
+                            <button className="btn btn-primary" onClick={() => setCurrentScreen('selectService')}>Continue to Service Selection</button>
+                            <button className="btn btn-secondary" onClick={() => setCurrentScreen('selectDimensions')}>Edit Dimensions</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'selectService' && (<>
+                        <div className="app-header"><h1>Select Service Level</h1><p>Step 3 of 4</p></div>
+                        <div className="content">
+                            <div className="step-indicator"><div className="step completed">1</div><div className="step completed">2</div><div className="step active">3</div><div className="step">4</div></div>
+                            {error && <div className="error-message">{error}</div>}
+                            <h3 style={{marginBottom: '14px', color: '#333', fontSize: '16px'}}>Choose your service level</h3>
+                            {serviceLevels.map(service => (<div key={service.id} className={`service-card ${orderData.serviceLevel === service.name ? 'selected' : ''}`} onClick={() => handleServiceSelection(service)}><h3>{service.name}</h3><div className="service-speed">⏱️ {service.speed}</div><div className="service-price">${service.price.toFixed(2)}</div></div>))}
+                            <button className="btn btn-primary" onClick={proceedToConfirm}>Continue to Review</button>
+                            <button className="btn btn-secondary" onClick={() => setCurrentScreen('confirmDimensions')}>Back</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'paymentCard' && (<>
+                        <div className="app-header"><h1>Payment Information</h1><p>Step 3 of 4</p></div>
+                        <div className="content">
+                            <div className="step-indicator"><div className="step completed">1</div><div className="step completed">2</div><div className="step active">3</div><div className="step">4</div></div>
+                            {error && <div className="error-message">{error}</div>}
+                            <h3 style={{marginBottom: '14px', color: '#333', fontSize: '16px'}}>💳 Select Payment Method</h3>
+                            
+                            <div className={`saved-card ${orderData.paymentMethodType === 'existing' ? 'selected' : ''}`} onClick={() => setOrderData({...orderData, paymentMethodType: 'existing'})}>
+                                <input type="radio" checked={orderData.paymentMethodType === 'existing'} onChange={() => {}} />
+                                <div className="saved-card-info">
+                                    <div className="saved-card-type">Doe's Debit</div>
+                                    <div className="saved-card-number">•••• 1234</div>
+                                </div>
+                            </div>
+
+                            <div className={`saved-card ${orderData.paymentMethodType === 'new' ? 'selected' : ''}`} onClick={() => setOrderData({...orderData, paymentMethodType: 'new'})}>
+                                <input type="radio" checked={orderData.paymentMethodType === 'new'} onChange={() => {}} />
+                                <div className="saved-card-info">
+                                    <div className="saved-card-type">Add New Card</div>
+                                    <div className="saved-card-number">Enter card details below</div>
+                                </div>
+                            </div>
+
+                            {orderData.paymentMethodType === 'new' && (<>
+                                <h3 style={{marginBottom: '14px', marginTop: '16px', color: '#333', fontSize: '16px'}}>Enter New Card Details</h3>
+                                <div className="form-group"><label>Cardholder Name</label><input type="text" placeholder="John Doe" value={orderData.cardName} onChange={(e) => setOrderData({...orderData, cardName: e.target.value})} /></div>
+                                <div className="form-group"><label>Card Number</label><input type="text" placeholder="1234 5678 9012 3456" maxLength="19" value={orderData.cardNumber} onChange={(e) => {const val = e.target.value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim(); setOrderData({...orderData, cardNumber: val});}} /></div>
+                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px'}}>
+                                    <div className="form-group"><label>Expiry Date</label><input type="text" placeholder="MM/YY" maxLength="5" value={orderData.cardExpiry} onChange={(e) => {let val = e.target.value.replace(/\D/g, ''); if (val.length >= 2) val = val.slice(0,2) + '/' + val.slice(2,4); setOrderData({...orderData, cardExpiry: val});}} /></div>
+                                    <div className="form-group"><label>CVV</label><input type="text" placeholder="123" maxLength="3" value={orderData.cardCVV} onChange={(e) => setOrderData({...orderData, cardCVV: e.target.value.replace(/\D/g, '')})} /></div>
+                                </div>
+                            </>)}
+
+                            <button className="btn btn-primary" onClick={handleCardSubmit}>Continue to Tip</button>
+                            <button className="btn btn-secondary" onClick={() => setCurrentScreen('selectService')}>Back</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'addTip' && (<>
+                        <div className="app-header"><h1>Add a Tip (Optional)</h1><p>Step 3 of 4</p></div>
+                        <div className="content">
+                            <div className="step-indicator"><div className="step completed">1</div><div className="step completed">2</div><div className="step active">3</div><div className="step">4</div></div>
+                            <h3 style={{marginBottom: '14px', color: '#333', fontSize: '16px', textAlign: 'center'}}>💵 Show your appreciation</h3>
+                            <p style={{textAlign: 'center', color: '#666', marginBottom: '16px', fontSize: '13px'}}>100% of your tip goes directly to your driver</p>
+                            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '14px'}}>
+                                <button className={`btn ${orderData.tipAmount === 5 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setOrderData({...orderData, tipAmount: 5})} style={{marginTop: 0}}>$5</button>
+                                <button className={`btn ${orderData.tipAmount === 10 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setOrderData({...orderData, tipAmount: 10})} style={{marginTop: 0}}>$10</button>
+                                <button className={`btn ${orderData.tipAmount === 15 ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setOrderData({...orderData, tipAmount: 15})} style={{marginTop: 0}}>$15</button>
+                            </div>
+                            <div className="form-group"><label>Custom Tip Amount</label><input type="number" placeholder="Enter custom amount" min="0" value={orderData.tipAmount || ''} onChange={(e) => {const val = parseFloat(e.target.value); setOrderData({...orderData, tipAmount: val >= 0 ? val : 0});}} /></div>
+                            <div style={{background: '#f0f4ff', padding: '14px', borderRadius: '10px', marginBottom: '14px', textAlign: 'center'}}>
+                                <p style={{color: '#333', fontWeight: '600', marginBottom: '4px', fontSize: '13px'}}>Selected Tip</p>
+                                <p style={{color: '#667eea', fontSize: '22px', fontWeight: '700'}}>${(orderData.tipAmount || 0).toFixed(2)}</p>
+                            </div>
+                            <button className="btn btn-primary" onClick={handleTipSubmit}>Continue to Review</button>
+                            <button className="btn btn-secondary" onClick={() => setOrderData({...orderData, tipAmount: 0})}>Skip Tip</button>
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'confirmOrder' && (<>
+                        <div className="app-header"><h1>Review & Confirm</h1><p>Step 4 of 4</p></div>
+                        <div className="content">
+                            <div className="step-indicator"><div className="step completed">1</div><div className="step completed">2</div><div className="step completed">3</div><div className="step active">4</div></div>
+                            <div className="summary-section"><h3>📦 Item Details</h3><div className="summary-item"><strong>Dimensions:</strong><span>{orderData.itemLength}" × {orderData.itemWidth}" × {orderData.itemHeight}"</span></div><div className="summary-item"><strong>Size Category:</strong><span>{orderData.itemSize}</span></div><div className="summary-item"><strong>Item Cost:</strong><span>${orderData.itemBaseCost.toFixed(2)}</span></div><div className="summary-item"><strong>Additional Help:</strong><span>{orderData.additionalHelp ? 'Yes (+$25.00)' : 'No'}</span></div><button className="edit-btn" onClick={() => setCurrentScreen('selectDimensions')}>Edit</button></div>
+                            <div className="summary-section"><h3>🚚 Service Details</h3><div className="summary-item"><strong>Service Level:</strong><span>{orderData.serviceLevel}</span></div><div className="summary-item"><strong>Service Cost:</strong><span>${orderData.serviceLevelPrice.toFixed(2)}</span></div><button className="edit-btn" onClick={() => setCurrentScreen('selectService')}>Edit</button></div>
+                            <div className="summary-section"><h3>💳 Payment & Tip</h3><div className="summary-item"><strong>Card:</strong><span>{orderData.paymentMethodType === 'existing' ? "Doe's Debit ••••1234" : '****' + orderData.cardNumber.slice(-4)}</span></div>{orderData.tipAmount > 0 && <div className="summary-item"><strong>Driver Tip:</strong><span>${orderData.tipAmount.toFixed(2)}</span></div>}<button className="edit-btn" onClick={() => setCurrentScreen('paymentCard')}>Edit</button></div>
+                            <div className="summary-section"><h3>📍 Locations</h3><div className="summary-item"><strong>Pickup:</strong><span style={{textAlign: 'right'}}>{getPickupAddress()}</span></div><div className="summary-item"><strong>Drop-off:</strong><span style={{textAlign: 'right'}}>{getDropoffAddress()}</span></div><button className="edit-btn" onClick={() => setCurrentScreen('assignAddress')}>Edit</button></div>
+                            <div className="total-price"><span>Total Cost:</span><span>${getTotalCost().toFixed(2)}</span></div>
+                            {isLoading ? <div className="loader"></div> : (<><button className="btn btn-primary" onClick={handleSubmitOrder}>Submit Delivery Request</button><button className="btn btn-secondary" onClick={() => setCurrentScreen('selectService')}>Back</button></>)}
+                        </div>
+                    </>)}
+
+                    {currentScreen === 'orderConfirmed' && (<>
+                        <div className="app-header"><h1>Order Confirmed! 🎉</h1><p>Finding you a driver...</p></div>
+                        <div className="content">
+                            <div style={{textAlign: 'center', margin: '20px 0'}}><div style={{fontSize: '70px', marginBottom: '14px'}}>✅</div><h2 style={{color: '#4caf50', marginBottom: '12px', fontSize: '22px'}}>Request Submitted!</h2><p style={{color: '#666', marginBottom: '14px', fontSize: '14px'}}>Your delivery request has been received and is now available for drivers.</p></div>
+                            <div className="tracking-id"><h3>Tracking ID</h3><div className="id">{trackingId}</div></div>
+                            <div className="summary-section"><h3>📋 Order Summary</h3><div className="summary-item"><strong>Item Size:</strong><span>{orderData.itemSize}</span></div><div className="summary-item"><strong>Service:</strong><span>{orderData.serviceLevel}</span></div><div className="summary-item"><strong>Total:</strong><span>${getTotalCost().toFixed(2)}</span></div></div>
+                            <div style={{background: '#e3f2fd', padding: '14px', borderRadius: '10px', marginTop: '14px'}}><p style={{color: '#1976d2', fontSize: '13px', margin: 0}}>📧 A confirmation email has been sent to <strong>{userData.email}</strong></p></div>
+                            <button className="btn btn-primary" onClick={() => setCurrentScreen('dashboard')}>Back to Dashboard</button>
+                            <button className="btn btn-secondary" onClick={startNewOrder}>Create Another Delivery</button>
+                        </div>
+                    </>)}
+                </div>
+            );
+        }
+        ReactDOM.render(<DropOffApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
